@@ -37,30 +37,21 @@ inline void directoryExistsOrCreate(const char* pzPath)
 //    - Check if the directory exists where the image will be stored.
 //    - Build the directory and image names.
 int incr = 0;
-inline bool saveImg(Mat image, const string DIRECTORY, const string EXTENSION, const char * DIR_FORMAT, const char * FILE_FORMAT)
+inline bool saveImg(Mat image, const char *DIRECTORY, const string EXTENSION, int cropped)
 {
     stringstream ss;
-    time_t seconds;
-    struct tm * timeinfo;
-    char TIME[80];
-    time (&seconds);
-    // Get the current time
-    timeinfo = localtime (&seconds);
-    
+
     // Create name for the date directory
-    strftime (TIME,80,DIR_FORMAT,timeinfo);
     ss.str("");
-    ss << DIRECTORY << TIME;
-    directoryExistsOrCreate(ss.str().c_str());
-    ss << "/cropped";
+    ss << DIRECTORY;
+    if (cropped)
+           ss << "/cropped";
     directoryExistsOrCreate(ss.str().c_str());
 
     // Create name for the image
-    strftime (TIME,80,FILE_FORMAT,timeinfo);
-    ss.str("");
-    if(incr < 100) incr++; // quick fix for when delay < 1s && > 10ms, (when delay <= 10ms, images are overwritten)
-    else incr = 0;
-    ss << DIRECTORY << TIME << static_cast<int>(incr) << EXTENSION;
+    incr++;
+    ss << "/img" << static_cast<int>(incr) << EXTENSION;
+    printf("Saving to %s\n",ss.str().c_str()); fflush(stdout);
     return imwrite(ss.str().c_str(), image);
 }
 
@@ -117,26 +108,23 @@ inline int detectMotion(const Mat & motion, Mat & result, Mat & result_cropped,
 
 int main (int argc, char * const argv[])
 {
-    const string DIR = "/home/pi/motion_src/pics/"; // directory where the images will be stored
     const string EXT = ".jpg"; // extension of the images
-    const int DELAY = 500; // in mseconds, take a picture every 1/2 second
-    const string LOGFILE = "/home/pi/motion_src/log";
 
-    // Format of directory
-    string DIR_FORMAT = "%d%h%Y"; // 1Jan1970
-    string FILE_FORMAT = DIR_FORMAT + "/" + "%d%h%Y_%H%M%S"; // 1Jan1970/1Jan1970_12153
-    string CROPPED_FILE_FORMAT = DIR_FORMAT + "/cropped/" + "%d%h%Y_%H%M%S"; // 1Jan1970/cropped/1Jan1970_121539
+    if (argc<3) {
+       fprintf(stderr, "Usage: motion INPUT_FILE_NAME OUTPUT_DIRECTORY [x1 y1 x2 y2 [pixel_change motion]]\n");
+       fprintf(stderr, "Default values: x1, y1 = 0; x2, y2 = width, height of the frame, pixel_change=5 motion=20\n");
+       exit(1);
+    }
 
     // Set up camera
-    CvCapture * camera = cvCaptureFromCAM(CV_CAP_ANY);
-    cvSetCaptureProperty(camera, CV_CAP_PROP_FRAME_WIDTH, 1280); // width of viewport of camera
-    cvSetCaptureProperty(camera, CV_CAP_PROP_FRAME_HEIGHT, 720); // height of ...
-    
+    CvCapture * camera = cvCaptureFromFile(argv[1]);
+
     // Take images and convert them to gray
     Mat result, result_cropped;
     Mat prev_frame = result = cvQueryFrame(camera);
     Mat current_frame = cvQueryFrame(camera);
     Mat next_frame = cvQueryFrame(camera);
+
     cvtColor(current_frame, current_frame, CV_RGB2GRAY);
     cvtColor(prev_frame, prev_frame, CV_RGB2GRAY);
     cvtColor(next_frame, next_frame, CV_RGB2GRAY);
@@ -149,27 +137,38 @@ int main (int argc, char * const argv[])
     int number_of_changes, number_of_sequence = 0;
     Scalar mean_, color(0,255,255); // yellow
     
+
+    int x_start = 0, x_stop = current_frame.cols;
+    int y_start = 0, y_stop = current_frame.rows;
+
     // Detect motion in window
-    int x_start = 10, x_stop = current_frame.cols-11;
-    int y_start = 350, y_stop = 530;
+    if (argc>=7) {
+        x_start = atoi(argv[3]);
+        y_start = atoi(argv[4]);
+        x_stop = atoi(argv[5]);
+        y_stop = atoi(argv[6]);
+    }
 
     // If more than 'there_is_motion' pixels are changed, we say there is motion
     // and store an image on disk
     int there_is_motion = 5;
+    if (argc >= 8) there_is_motion = atoi(argv[7]);
+
     
     // Maximum deviation of the image, the higher the value, the more motion is allowed
     int max_deviation = 20;
-    
+    if (argc >= 9) max_deviation = atoi(argv[8]);
+
     // Erode kernel
     Mat kernel_ero = getStructuringElement(MORPH_RECT, Size(2,2));
     
     // All settings have been set, now go in endless loop and
     // take as many pictures you want..
-    while (true){
+    while (cvGrabFrame(camera)){
         // Take a new image
         prev_frame = current_frame;
         current_frame = next_frame;
-        next_frame = cvQueryFrame(camera);
+        next_frame = cvRetrieveFrame(camera);
         result = next_frame;
         cvtColor(next_frame, next_frame, CV_RGB2GRAY);
 
@@ -187,17 +186,17 @@ int main (int argc, char * const argv[])
         if(number_of_changes>=there_is_motion)
         {
             if(number_of_sequence>0){ 
-                saveImg(result,DIR,EXT,DIR_FORMAT.c_str(),FILE_FORMAT.c_str());
-                saveImg(result_cropped,DIR,EXT,DIR_FORMAT.c_str(),CROPPED_FILE_FORMAT.c_str());
+                saveImg(result,argv[2],EXT,0);
+                saveImg(result_cropped,argv[2],EXT,1);
             }
             number_of_sequence++;
         }
         else
         {
             number_of_sequence = 0;
-            // Delay, wait a 1/2 second.
-            cvWaitKey (DELAY);
         }
+
+
     }
     return 0;    
 }
