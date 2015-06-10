@@ -36,8 +36,7 @@ inline void directoryExistsOrCreate(const char* pzPath)
 // When motion is detected we write the image to disk
 //    - Check if the directory exists where the image will be stored.
 //    - Build the directory and image names.
-int incr = 0;
-inline bool saveImg(Mat image, const char *DIRECTORY, const string EXTENSION, int cropped)
+inline bool saveImg(Mat image, const char *DIRECTORY, int img_id, const string EXTENSION, int cropped)
 {
     stringstream ss;
 
@@ -49,8 +48,7 @@ inline bool saveImg(Mat image, const char *DIRECTORY, const string EXTENSION, in
     directoryExistsOrCreate(ss.str().c_str());
 
     // Create name for the image
-    incr++;
-    ss << "/img" << static_cast<int>(incr) << EXTENSION;
+    ss << "/img" << static_cast<int>(img_id) << EXTENSION;
     printf("Saving to %s\n",ss.str().c_str()); fflush(stdout);
     return imwrite(ss.str().c_str(), image);
 }
@@ -186,8 +184,8 @@ int main (int argc, char * const argv[])
         if(number_of_changes>=there_is_motion)
         {
             if(number_of_sequence>0){ 
-                saveImg(result,argv[2],EXT,0);
-                saveImg(result_cropped,argv[2],EXT,1);
+                saveImg(result,argv[2],number_of_sequence,EXT,0);
+                saveImg(result_cropped,argv[2],number_of_sequence,EXT,1);
             }
             number_of_sequence++;
         }
