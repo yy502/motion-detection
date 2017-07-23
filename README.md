@@ -1,10 +1,10 @@
-#OpenCV C++ Motion Detection
+# OpenCV C++ Motion Detection
 
 This is based on work by [Cedric Verstraeten](https://blog.cedric.ws/opencv-simple-motion-detection), also see his [Kerberos.io project](https://www.kerberos.io) for a very nice web interface and camera monitoring interface for Raspberry Pi.
 
 This project handles a different problem: you have a bunch of videos and you only want the parts with motion.
 
-#Installation 
+# Installation 
 
 Install OpenCV, for example on Mac using Homebrew:
 
