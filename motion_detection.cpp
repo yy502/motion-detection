@@ -143,7 +143,7 @@ int main (int argc, char * const argv[])
     // box_color, the color for drawing the rectangle around changed area
     Mat d1, d2, motion;
     int frame_changes, image_sequence = 0;
-    Scalar mean_, box_color(0,255,255); // yellow
+    Scalar box_color(0,255,255); // yellow
     
 
     int x_start = 0, x_stop = current_frame.cols;
