@@ -120,7 +120,7 @@ int main (int argc, char * const argv[])
 
     if (argc<3) {
        fprintf(stderr, "Usage: motion INPUT_FILE_NAME OUTPUT_DIRECTORY [changes_threshold motion_deviation]\n");
-       fprintf(stderr, "Default values: changes_threshold=5 motion_deviation=20\n");
+       fprintf(stderr, "Default values: changes_threshold=10 motion_deviation=20\n");
        exit(1);
     }
 
@@ -150,10 +150,10 @@ int main (int argc, char * const argv[])
     int y_start = 0, y_stop = current_frame.rows;
 
 
-    // If more than 'motion_threshold' pixels are changed, we say there is motion
+    // If more than 'changes_threshold' pixels are changed, we say there is motion
     // and store an image on disk
-    int motion_threshold = 5;
-    if (argc >= 4) motion_threshold = atoi(argv[3]);
+    int changes_threshold = 10;
+    if (argc >= 4) changes_threshold = atoi(argv[3]);
 
     // Maximum deviation of the image, the higher the value, the more motion is allowed
     int max_deviation = 20;
@@ -181,7 +181,7 @@ int main (int argc, char * const argv[])
         erode(motion, motion, kernel_ero);
         
         frame_changes = detectMotion(motion, result, x_start, x_stop, y_start, y_stop, max_deviation, box_color);
-        if(frame_changes>=motion_threshold)
+        if(frame_changes>=changes_threshold)
         {
             saveImg(result,argv[2],argv[1],image_sequence,EXT);
             image_sequence++;
