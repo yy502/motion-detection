@@ -8,16 +8,13 @@ This was forked from https://github.com/jooray/motion-detection
 
 ## Compilation
 
-    cd motion_src
     cmake .
     make
 
 ## Usage
 
-    ./bin/motion <input_video> <output_dir> [<changes_threshold> <motion_deviation>]
+    ./motion <input_video> <output_dir> [<changes_threshold> <motion_deviation>]
 
 Defaults:
 - changes_threshold = 5
 - motion_deviation = 20
-
-
