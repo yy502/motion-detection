@@ -5,7 +5,7 @@
 
 #include <iostream>
 #include <fstream>
-
+#include <string>
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include <time.h>
@@ -17,6 +17,19 @@
 
 using namespace std;
 using namespace cv;
+using std::string;
+
+
+// extract video file name from full path
+string getFileName(const string& s)
+{
+   char sep = '/';
+   size_t i = s.rfind(sep, s.length());
+   if (i != string::npos) {
+      return(s.substr(i+1, s.length() - i));
+   }
+   return("motion");
+}
 
 // Check if the directory exists, if not create it
 // This function will create a new directory if the image is the first
@@ -36,29 +49,28 @@ inline void directoryExistsOrCreate(const char* pzPath)
 // When motion is detected we write the image to disk
 //    - Check if the directory exists where the image will be stored.
 //    - Build the directory and image names.
-inline bool saveImg(Mat image, const char *DIRECTORY, int saved_counter, const string EXTENSION, int cropped)
+inline bool saveImg(Mat image, const char *DIRECTORY, const char *PREFIX, int saved_counter, const string EXTENSION)
 {
     stringstream ss;
 
     // Create name for the date directory
     ss.str("");
     ss << DIRECTORY;
-    if (cropped)
-           ss << "/cropped";
     directoryExistsOrCreate(ss.str().c_str());
 
     // Create name for the image
-    ss << "/img" << static_cast<int>(saved_counter) << EXTENSION;
-    printf("Saving to %s\n",ss.str().c_str()); fflush(stdout);
+    string path(PREFIX);
+    ss << "/" << getFileName(path) << "_" << static_cast<int>(saved_counter) << EXTENSION;
+    printf("Motion detected > %s\n",ss.str().c_str()); fflush(stdout);
     return imwrite(ss.str().c_str(), image);
 }
 
 // Check if there is motion in the result matrix
 // count the number of changes and return.
-inline int detectMotion(const Mat & motion, Mat & result, Mat & result_cropped,
+inline int detectMotion(const Mat & motion, Mat & result,
                  int x_start, int x_stop, int y_start, int y_stop,
                  int max_deviation,
-                 Scalar & color)
+                 Scalar & box_color)
 {
     // calculate the standard deviation
     Scalar mean, stddev;
@@ -66,7 +78,7 @@ inline int detectMotion(const Mat & motion, Mat & result, Mat & result_cropped,
     // if not to much changes then the motion is real (neglect agressive snow, temporary sunlight)
     if(stddev[0] < max_deviation)
     {
-        int number_of_changes = 0;
+        int frame_changes = 0;
         int min_x = motion.cols, max_x = 0;
         int min_y = motion.rows, max_y = 0;
         // loop over image and detect changes
@@ -77,7 +89,7 @@ inline int detectMotion(const Mat & motion, Mat & result, Mat & result_cropped,
                 // of images (prev_frame, current_frame, next_frame)
                 if(static_cast<int>(motion.at<uchar>(j,i)) == 255)
                 {
-                    number_of_changes++;
+                    frame_changes++;
                     if(min_x>i) min_x = i;
                     if(max_x<i) max_x = i;
                     if(min_y>j) min_y = j;
@@ -85,7 +97,7 @@ inline int detectMotion(const Mat & motion, Mat & result, Mat & result_cropped,
                 }
             }
         }
-        if(number_of_changes){
+        if(frame_changes){
             //check if not out of bounds
             if(min_x-10 > 0) min_x -= 10;
             if(min_y-10 > 0) min_y -= 10;
@@ -95,11 +107,9 @@ inline int detectMotion(const Mat & motion, Mat & result, Mat & result_cropped,
             Point x(min_x,min_y);
             Point y(max_x,max_y);
             Rect rect(x,y);
-            Mat cropped = result(rect);
-            cropped.copyTo(result_cropped);
-            rectangle(result,rect,color,1);
+            rectangle(result,rect,box_color,1);
         }
-        return number_of_changes;
+        return frame_changes;
     }
     return 0;
 }
@@ -109,8 +119,8 @@ int main (int argc, char * const argv[])
     const string EXT = ".jpg"; // extension of the images
 
     if (argc<3) {
-       fprintf(stderr, "Usage: motion INPUT_FILE_NAME OUTPUT_DIRECTORY [x1 y1 x2 y2 [pixel_change motion]]\n");
-       fprintf(stderr, "Default values: x1, y1 = 0; x2, y2 = width, height of the frame, pixel_change=5 motion=20\n");
+       fprintf(stderr, "Usage: motion INPUT_FILE_NAME OUTPUT_DIRECTORY [changes_threshold motion_deviation]\n");
+       fprintf(stderr, "Default values: changes_threshold=5 motion_deviation=20\n");
        exit(1);
     }
 
@@ -129,33 +139,25 @@ int main (int argc, char * const argv[])
     
     // d1 and d2 for calculating the differences
     // result, the result of and operation, calculated on d1 and d2
-    // number_of_changes, the amount of changes in the result matrix.
-    // color, the color for drawing the rectangle when something has changed.
+    // frame_changes, the count of changes in the result matrix.
+    // box_color, the color for drawing the rectangle around changed area
     Mat d1, d2, motion;
-    int number_of_changes, number_of_sequence = 0, saved_counter = 0;
-    Scalar mean_, color(0,255,255); // yellow
+    int frame_changes, saved_counter = 0;
+    Scalar mean_, box_color(0,255,255); // yellow
     
 
     int x_start = 0, x_stop = current_frame.cols;
     int y_start = 0, y_stop = current_frame.rows;
 
-    // Detect motion in window
-    if (argc>=7) {
-        x_start = atoi(argv[3]);
-        y_start = atoi(argv[4]);
-        x_stop = atoi(argv[5]);
-        y_stop = atoi(argv[6]);
-    }
 
-    // If more than 'there_is_motion' pixels are changed, we say there is motion
+    // If more than 'motion_threshold' pixels are changed, we say there is motion
     // and store an image on disk
-    int there_is_motion = 5;
-    if (argc >= 8) there_is_motion = atoi(argv[7]);
+    int motion_threshold = 5;
+    if (argc >= 4) motion_threshold = atoi(argv[3]);
 
-    
     // Maximum deviation of the image, the higher the value, the more motion is allowed
     int max_deviation = 20;
-    if (argc >= 9) max_deviation = atoi(argv[8]);
+    if (argc >= 5) max_deviation = atoi(argv[4]);
 
     // Erode kernel
     Mat kernel_ero = getStructuringElement(MORPH_RECT, Size(2,2));
@@ -178,24 +180,12 @@ int main (int argc, char * const argv[])
         threshold(motion, motion, 35, 255, CV_THRESH_BINARY);
         erode(motion, motion, kernel_ero);
         
-        number_of_changes = detectMotion(motion, result, result_cropped,  x_start, x_stop, y_start, y_stop, max_deviation, color);
-        
-        // If a lot of changes happened, we assume something changed.
-        if(number_of_changes>=there_is_motion)
+        frame_changes = detectMotion(motion, result, x_start, x_stop, y_start, y_stop, max_deviation, box_color);
+        if(frame_changes>=motion_threshold)
         {
-            if(number_of_sequence>0){ 
-                saveImg(result,argv[2],saved_counter,EXT,0);
-                saveImg(result_cropped,argv[2],saved_counter,EXT,1);
-                saved_counter++;
-            }
-            number_of_sequence++;
+            saveImg(result,argv[2],argv[1],saved_counter,EXT);
+            saved_counter++;
         }
-        else
-        {
-            number_of_sequence = 0;
-        }
-
-
     }
-    return 0;    
+    return 0;
 }
