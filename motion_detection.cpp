@@ -49,7 +49,7 @@ inline void directoryExistsOrCreate(const char* pzPath)
 // When motion is detected we write the image to disk
 //    - Check if the directory exists where the image will be stored.
 //    - Build the directory and image names.
-inline bool saveImg(Mat image, const char *DIRECTORY, const char *PREFIX, int saved_counter, const string EXTENSION)
+inline bool saveImg(Mat image, const char *DIRECTORY, const char *PREFIX, int image_sequence, const string EXTENSION)
 {
     stringstream ss;
 
@@ -60,7 +60,7 @@ inline bool saveImg(Mat image, const char *DIRECTORY, const char *PREFIX, int sa
 
     // Create name for the image
     string path(PREFIX);
-    ss << "/" << getFileName(path) << "_" << static_cast<int>(saved_counter) << EXTENSION;
+    ss << "/" << getFileName(path) << "_" << static_cast<int>(image_sequence) << EXTENSION;
     printf("Motion detected > %s\n",ss.str().c_str()); fflush(stdout);
     return imwrite(ss.str().c_str(), image);
 }
@@ -142,7 +142,7 @@ int main (int argc, char * const argv[])
     // frame_changes, the count of changes in the result matrix.
     // box_color, the color for drawing the rectangle around changed area
     Mat d1, d2, motion;
-    int frame_changes, saved_counter = 0;
+    int frame_changes, image_sequence = 0;
     Scalar mean_, box_color(0,255,255); // yellow
     
 
@@ -183,8 +183,8 @@ int main (int argc, char * const argv[])
         frame_changes = detectMotion(motion, result, x_start, x_stop, y_start, y_stop, max_deviation, box_color);
         if(frame_changes>=motion_threshold)
         {
-            saveImg(result,argv[2],argv[1],saved_counter,EXT);
-            saved_counter++;
+            saveImg(result,argv[2],argv[1],image_sequence,EXT);
+            image_sequence++;
         }
     }
     return 0;
