@@ -28,7 +28,7 @@ string getFileName(const string& s)
    if (i != string::npos) {
       return(s.substr(i+1, s.length() - i));
    }
-   return("motion");
+   return(s);
 }
 
 // Check if the directory exists, if not create it
