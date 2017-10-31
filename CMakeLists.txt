@@ -13,7 +13,9 @@ SET(CMAKE_CXX_FLAGS "-o3 -w")
 SET(OpenCV_LIBRARIES opencv_core opencv_highgui opencv_imgproc opencv_video)
 
 ADD_EXECUTABLE(motion-detection motion_detection.cpp)
+ADD_EXECUTABLE(motion-seeker motion_seeker.cpp)
 TARGET_LINK_LIBRARIES(motion-detection ${OpenCV_LIBRARIES})
+TARGET_LINK_LIBRARIES(motion-seeker ${OpenCV_LIBRARIES})
 
 SET(CMAKE_BUILD_TYPE Release)
 
