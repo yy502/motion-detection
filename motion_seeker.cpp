@@ -69,7 +69,7 @@ int main (int argc, char * const argv[])
     CvCapture * camera = cvCaptureFromFile(argv[1]);
 
     // Take images and convert them to gray
-    Mat result, result_cropped;
+    Mat result;
     Mat prev_frame = result = cvQueryFrame(camera);
     Mat current_frame = cvQueryFrame(camera);
     Mat next_frame = cvQueryFrame(camera);
