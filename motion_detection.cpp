@@ -120,7 +120,7 @@ int main (int argc, char * const argv[])
 
     if (argc<3) {
        fprintf(stderr, "Usage: motion INPUT_FILE_NAME OUTPUT_DIRECTORY [changes_threshold motion_deviation]\n");
-       fprintf(stderr, "Default values: changes_threshold=10 motion_deviation=20\n");
+       fprintf(stderr, "Default values: changes_threshold=20 motion_deviation=50\n");
        exit(1);
     }
 
@@ -152,11 +152,11 @@ int main (int argc, char * const argv[])
 
     // If more than 'changes_threshold' pixels are changed, we say there is motion
     // and store an image on disk
-    int changes_threshold = 10;
+    int changes_threshold = 20;
     if (argc >= 4) changes_threshold = atoi(argv[3]);
 
     // Maximum deviation of the image, the higher the value, the more motion is allowed
-    int max_deviation = 20;
+    int max_deviation = 50;
     if (argc >= 5) max_deviation = atoi(argv[4]);
 
     // Erode kernel

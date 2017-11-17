@@ -61,7 +61,7 @@ int main (int argc, char * const argv[])
     if (argc<2) {
        fprintf(stderr, "Usage: motion-seeker INPUT_FILE_NAME [changes_threshold motion_deviation]\n");
        fprintf(stderr, "Prints 1 to stdout if motion is detected in the video; 0 for no motion.\n");
-       fprintf(stderr, "Default values: changes_threshold=10 motion_deviation=20\n");
+       fprintf(stderr, "Default values: changes_threshold=20 motion_deviation=50\n");
        exit(1);
     }
 
@@ -91,11 +91,11 @@ int main (int argc, char * const argv[])
 
     // If more than 'changes_threshold' pixels are changed, we say there is motion
     // and store an image on disk
-    int changes_threshold = 10;
+    int changes_threshold = 20;
     if (argc >= 3) changes_threshold = atoi(argv[2]);
 
     // Maximum deviation of the image, the higher the value, the more motion is allowed
-    int max_deviation = 20;
+    int max_deviation = 50;
     if (argc == 4) max_deviation = atoi(argv[3]);
 
     // Erode kernel
