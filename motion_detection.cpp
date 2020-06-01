@@ -125,17 +125,23 @@ int main (int argc, char * const argv[])
     }
 
     // Set up camera
-    CvCapture * camera = cvCaptureFromFile(argv[1]);
+    VideoCapture camera;
+    camera.open(argv[1]);
 
     // Take images and convert them to gray
     Mat result;
-    Mat prev_frame = result = cvQueryFrame(camera);
-    Mat current_frame = cvQueryFrame(camera);
-    Mat next_frame = cvQueryFrame(camera);
+    Mat prev_frame;
+    Mat current_frame;
+    Mat next_frame;
 
-    cvtColor(current_frame, current_frame, CV_RGB2GRAY);
-    cvtColor(prev_frame, prev_frame, CV_RGB2GRAY);
-    cvtColor(next_frame, next_frame, CV_RGB2GRAY);
+    camera.read(prev_frame);
+    result = prev_frame;
+    camera.read(current_frame);
+    camera.read(next_frame);
+
+    cvtColor(current_frame, current_frame, COLOR_RGB2GRAY);
+    cvtColor(prev_frame, prev_frame, COLOR_RGB2GRAY);
+    cvtColor(next_frame, next_frame, COLOR_RGB2GRAY);
     
     // d1 and d2 for calculating the differences
     // result, the result of and operation, calculated on d1 and d2
@@ -164,20 +170,22 @@ int main (int argc, char * const argv[])
     
     // All settings have been set, now go in endless loop and
     // take as many pictures you want..
-    while (cvGrabFrame(camera)){
+    while (camera.isOpened()){
         // Take a new image
         prev_frame = current_frame;
         current_frame = next_frame;
-        next_frame = cvRetrieveFrame(camera);
+
+	if (!camera.read(next_frame))
+		break;
         result = next_frame;
-        cvtColor(next_frame, next_frame, CV_RGB2GRAY);
+        cvtColor(next_frame, next_frame, COLOR_RGB2GRAY);
 
         // Calc differences between the images and do AND-operation
         // threshold image, low differences are ignored (ex. contrast change due to sunlight)
         absdiff(prev_frame, next_frame, d1);
         absdiff(next_frame, current_frame, d2);
         bitwise_and(d1, d2, motion);
-        threshold(motion, motion, 35, 255, CV_THRESH_BINARY);
+        threshold(motion, motion, 35, 255, THRESH_BINARY);
         erode(motion, motion, kernel_ero);
         
         frame_changes = detectMotion(motion, result, x_start, x_stop, y_start, y_stop, max_deviation, box_color);
