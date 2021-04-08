@@ -12,12 +12,11 @@ SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR})
 SET(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR})
 SET(CMAKE_CXX_FLAGS "-o3 -w")
 # SET(CMAKE_CXX_LINK_FLAGS "-pg") # dont want to profile each execution
-SET(OpenCV_LIBRARIES opencv_core opencv_highgui opencv_imgproc opencv_video)
 
 ADD_EXECUTABLE(motion-detection motion_detection.cpp)
 ADD_EXECUTABLE(motion-seeker motion_seeker.cpp)
-TARGET_LINK_LIBRARIES(motion-detection ${OpenCV_LIBRARIES})
-TARGET_LINK_LIBRARIES(motion-seeker ${OpenCV_LIBRARIES})
+TARGET_LINK_LIBRARIES(motion-detection ${OpenCV_LIBS})
+TARGET_LINK_LIBRARIES(motion-seeker ${OpenCV_LIBS})
 
 SET(CMAKE_BUILD_TYPE Release)
 
