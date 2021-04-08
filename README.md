@@ -13,7 +13,7 @@ This was forked from https://github.com/jooray/motion-detection
 
 ## Usage
 
-    ./motion <input_video> <output_dir> [<changes_threshold> <motion_deviation>]
+    ./motion-detection <input_video> <output_dir> [<changes_threshold> <motion_deviation>]
 
 Defaults:
 - changes_threshold = 10
