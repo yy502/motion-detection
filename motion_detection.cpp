@@ -165,6 +165,9 @@ int main (int argc, char * const argv[])
     int max_deviation = 50;
     if (argc >= 5) max_deviation = atoi(argv[4]);
 
+    printf("changes_threshold = %d\n", changes_threshold);
+    printf("max_deviation = %d\n", max_deviation);
+    
     // Erode kernel
     Mat kernel_ero = getStructuringElement(MORPH_RECT, Size(2,2));
     
